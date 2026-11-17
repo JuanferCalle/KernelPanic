@@ -47,3 +47,11 @@ La planta (grilla de 26×20 celdas de 2 m, zonas, puertas y puntos de interés) 
 - Manual: `blender -b models3d/kernelpanic_mapa.blend -P models3d/export_glb.py`
 - GitHub Pages no tiene Blender: haz commit del `.glb` actualizado, no solo del `.blend`.
 - La oscuridad de cada zona se ajusta en `ZONE_LIGHT` (`src/world.jsx`). El plano está escondido en `PLANO_POS` (callejón 17,5 del laberinto de racks).
+
+## Versión sin techo (solo para presentar)
+
+`kernelpanic_mapa_sin_techo.blend` (y su exportado `kernelpanic_mapa_sin_techo.glb`) es una copia del mapa para mostrar la distribución desde arriba en clase. El juego no la usa: se sigue cargando `kernelpanic_mapa.glb`, que sale de `kernelpanic_mapa.blend`.
+
+- Los 8 objetos `Techo_<Zona>` están en la colección **Techo (oculto)**, excluida de la vista. Para mostrar el techo otra vez, marca su casilla en el Outliner.
+- Es una copia fija: los cambios al mapa se hacen en `kernelpanic_mapa.blend`. Si después quieres actualizar la copia, vuelve a generarla.
+- Al guardarla no se reexporta nada: el plugin de `vite.config.js` solo vigila `kernelpanic_mapa.blend`.

@@ -42,7 +42,7 @@ Los conteos incluyen todas las pasadas de un cuadro: cámara, sombras, contorno 
 - [ ] Linterna: aparece el mensaje al recogerla, F la enciende y la apaga. El haz es ancho y de cerca no encandila.
 - [ ] Zonas oscuras sin linterna: aparece "Está demasiado oscuro para ver" y los objetos no se resaltan.
 - [ ] Puzzle 1: el código correcto abre el panel con animación y muestra la tarjeta; uno incorrecto muestra "Acceso denegado".
-- [ ] Inventario: lo recogido aparece en la barra y en TAB. La tarjeta abre la puerta de la Sala de racks.
+- [ ] Inventario: lo recogido aparece en la barra y en TAB. La tarjeta abre la puerta de la Sala de racks y luego sale del inventario; la nota sale al abrir el panel. El plano no ocupa espacio: muestra el minimapa.
 - [ ] Con menos de 2 minutos las luces pasan a rojo intermitente.
 - [ ] El paso del Pasillo parpadea de vez en cuando y luego se estabiliza.
 - [ ] No se atraviesan paredes, racks ni muebles, y no hay bloqueos invisibles.

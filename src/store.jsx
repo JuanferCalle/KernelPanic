@@ -23,6 +23,7 @@ let state = {
   overlayText: 'Cargando modelos...',
   overlayButton: null, // texto del botón (Comenzar, Continuar, Reintentar...)
   overlayResult: null, // null | 'won' | 'lost'
+  overlayRestart: false, // la pausa muestra también "Reiniciar"
 };
 const listeners = new Set();
 const subscribe = (listener) => {

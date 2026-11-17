@@ -45,4 +45,6 @@ canvas { display: block; }
 #overlay button { margin: 14px 0 10px; padding: 10px 34px; font: inherit; font-size: 18px; letter-spacing: 3px; color: #ecebe6; background: #7f1d1d; border: 1px solid #fca5a5; cursor: pointer; }
 #overlay button:hover { background: #991b1b; }
 #overlay.won button { background: #14532d; border-color: #86efac; }
+#overlay button.secondary { margin-top: 0; padding: 6px 24px; font-size: 14px; background: transparent; border-color: #ecebe666; }
+#overlay button.secondary:hover { background: #ffffff14; }
 @keyframes blink { 50% { opacity: .55; } }

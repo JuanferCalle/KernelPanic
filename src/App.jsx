@@ -29,7 +29,7 @@ export default function App() {
           onExit={() => game.current.closeTerminal()}
         />
       )}
-      <Overlay onClick={() => game.current.clickOverlay()} />
+      <Overlay onClick={() => game.current.clickOverlay()} onRestart={() => location.reload()} />
       {showFps && (
         <Suspense fallback={null}>
           <FpsPanel getStats={() => game.current?.stats()} />

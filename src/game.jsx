@@ -115,17 +115,22 @@ export function createGame(container) {
   function give(id) {
     if (!hasItem(id)) setUi({ inventory: [...getUi().inventory, id], newItem: id });
   }
+  // Los objetos que ya cumplieron su función salen del inventario (la nota al abrir el panel, la tarjeta al abrir la puerta)
+  function takeItem(id) {
+    setUi({ inventory: getUi().inventory.filter((i) => i !== id) });
+  }
 
   // --- Estado del juego ---
   let state = 'loading'; // loading | ready | playing | terminal | rebooting | won | lost
   let timeLeft = TIME_LIMIT;
   let flashlightOn = false;
-  let flashScale = 1;          // atenuación de la linterna cuando la pared está cerca
+  let warming = true;          // compilando shaders: el bucle no dibuja todavía
+  let flashScale = 1;         // atenuación de la linterna cuando la pared está cerca
   let darkWarned = false;      // ya se avisó "demasiado oscuro" en esta visita a la zona
   let vm;
 
-  function setOverlay(title, text, button) {
-    setUi({ overlayOpen: true, overlayTitle: title, overlayText: text, overlayButton: button });
+  function setOverlay(title, text, button, restart = false) {
+    setUi({ overlayOpen: true, overlayTitle: title, overlayText: text, overlayButton: button, overlayRestart: restart });
   }
   function endGame(won) {
     state = won ? 'won' : 'lost';
@@ -155,7 +160,7 @@ export function createGame(container) {
     }
   });
   controls.addEventListener('unlock', () => {
-    if (state === 'playing' || state === 'rebooting') setOverlay('PAUSA', 'El tiempo está detenido', 'Continuar');
+    if (state === 'playing' || state === 'rebooting') setOverlay('PAUSA', 'El tiempo está detenido', 'Continuar', true);
   });
 
   const keys = {};
@@ -237,7 +242,7 @@ export function createGame(container) {
   function closeTerminal(relock = true) {
     setUi({ termOpen: false });
     state = 'playing';
-    setOverlay('PAUSA', 'El tiempo está detenido', 'Continuar');
+    setOverlay('PAUSA', 'El tiempo está detenido', 'Continuar', true);
     if (relock) controls.lock(); // si el navegador lo permite, la pausa se oculta de inmediato
   }
   function submitPassword(value) {
@@ -249,6 +254,7 @@ export function createGame(container) {
         termLog: `${getUi().termLog}\n> ****\nACCESO CONCEDIDO\nPanel de seguridad abierto: retire la tarjeta de acceso.\n\nLOG técnico: "perdí el plano de planta\nen el fondo del laberinto de racks"\n`,
       });
       world.panel.open();
+      takeItem('note'); // la pista ya se usó
       interactable(world.panel.card, 'Recoger tarjeta de acceso', () => {
         world.panel.card.removeFromParent();
         removeInteractable(world.panel.card);
@@ -267,7 +273,7 @@ export function createGame(container) {
 
   // --- Carga de modelos de Blender ---
   const loader = new GLTFLoader();
-  Promise.all([armsUrl, flashlightUrl, mapaUrl].map((u) => loader.loadAsync(u))).then(([arms, fl, mapa]) => {
+  Promise.all([armsUrl, flashlightUrl, mapaUrl].map((u) => loader.loadAsync(u))).then(async ([arms, fl, mapa]) => {
     if (listeners.signal.aborted) return; // el componente se desmontó mientras cargaba
     world = buildWorld(scene, mapa);
     flashlight.map = world.textures.cookie;
@@ -324,7 +330,7 @@ export function createGame(container) {
 
     // --- Puertas: las libres se abren con clic; las bloqueadas explican qué falta ---
     // La de la sala de racks se abre USANDO la tarjeta de acceso del inventario (SCRUM-16: usar un objeto en el lugar correcto).
-    // La tarjeta no se gasta: también es una de las 3 llaves de la puerta blindada.
+    // Después no tiene más usos, así que sale del inventario.
     const REQUIRES = { Puerta_NOC_Racks: 'tarjeta' };
     const LOCKED_MSG = {
       Puerta_NOC_Racks: 'BLOQUEADA: requiere la tarjeta de acceso (está en el panel junto a la terminal)',
@@ -337,6 +343,7 @@ export function createGame(container) {
         if (item && hasItem(item)) {
           world.openDoor(door);
           removeInteractable(door.object);
+          takeItem(item);
           say('Usaste la tarjeta de acceso: puerta desbloqueada');
           objective('Explora la sala de racks (está a oscuras)');
           return;
@@ -357,12 +364,30 @@ export function createGame(container) {
     interactable(world.plano, 'Recoger plano', () => {
       world.plano.removeFromParent();
       removeInteractable(world.plano);
-      give('plano');
+      // El plano no ocupa espacio en el inventario: se "usa" al instante como minimapa
       minimap = createMinimap(world);
       setUi({ hasMap: true });
       say('Plano de planta: ahora ves el mapa en la esquina. [M] para ampliarlo', 5000);
       objective('Explora la instalación');
     }, { hitRadius: 0.3 });
+
+    // --- Precalentado: compilar todos los shaders antes de "Comenzar" ---
+    // WebGL compila cada material la primera vez que se dibuja; con 16 luces y sombras eso congelaba
+    // los primeros segundos de juego. Se compila todo aquí, con la pantalla de carga todavía visible:
+    // mundo, brazos con la linterna en la mano, contorno de resaltado y postprocesado.
+    setUi({ overlayText: 'Preparando gráficos...' });
+    vm.setHolding(true);
+    outline.selectedObjects = [flPickup];
+    try {
+      await Promise.all([renderer.compileAsync(scene, camera), renderer.compileAsync(vm.scene, camera)]);
+    } catch (err) {
+      console.warn('Precompilación de shaders incompleta', err); // el juego igual compila al dibujar
+    }
+    if (listeners.signal.aborted) return;
+    composer.render(0); // primer cuadro: termina de enlazar los programas y llena los mapas de sombra
+    outline.selectedObjects = [];
+    vm.setHolding(false);
+    warming = false;
 
     state = 'ready';
     setUi({ overlayText: 'Tienes 10 minutos para escapar del datacenter', overlayButton: 'Comenzar' });
@@ -377,7 +402,7 @@ export function createGame(container) {
     camera.position.set(x, y, z);
     camera.rotation.set(THREE.MathUtils.degToRad(pitch || 0), THREE.MathUtils.degToRad(yaw || 0), 0, 'YXZ');
     for (const id of (q.get('give') || '').split(',').filter(Boolean)) {
-      give(id);
+      if (id !== 'plano') give(id);
       if (id === 'flashlight') {
         vm.setHolding(true);
         if (q.get('flash') !== '0') setFlashlight(true);
@@ -413,7 +438,7 @@ export function createGame(container) {
     timer.update(now);
     const dt = Math.min(timer.getDelta(), 0.05);
     const t = timer.getElapsed();
-    if (!world) return; // todavía cargando el mapa
+    if (!world || warming) return; // todavía cargando el mapa o compilando shaders
     world.update(dt, t);
 
     let moving = 0;

@@ -293,9 +293,9 @@ export function buildWorld(scene, gltf) {
   }
   const zoneLights = [];
   const staticShadows = [];
-  // Las sombras fijas se recalculan durante los primeros cuadros: en el primero los shaders
-  // todavía compilan y una sola pasada puede quedar mal (la sala salía negra)
-  let shadowWarmup = 30;
+  // Las sombras fijas se recalculan durante los primeros cuadros (con una sola pasada la sala podía salir negra).
+  // Como los shaders ya se precompilan antes de "Comenzar" (game.jsx), bastan unos pocos
+  let shadowWarmup = 5;
   updaters.push(() => {
     if (shadowWarmup <= 0) return;
     shadowWarmup--;

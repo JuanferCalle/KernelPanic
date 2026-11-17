@@ -4,8 +4,7 @@ const SLOTS = 4;
 const ITEMS = {
   flashlight: { icon: '🔦', name: 'Linterna', desc: 'Presiona F para encenderla o apagarla.' },
   note: { icon: '📝', name: 'Nota del turno', desc: '"La clave es el año de fundación (ver placa en recepción)."' },
-  tarjeta: { icon: '💳', name: 'Tarjeta de acceso', desc: 'Abre la puerta del NOC a la sala de racks. Es una de las 3 llaves de la puerta blindada.' },
-  plano: { icon: '🗺️', name: 'Plano de planta', desc: 'Mapa de la instalación: se ve en la esquina inferior derecha. [M] para ampliarlo.' },
+  tarjeta: { icon: '💳', name: 'Tarjeta de acceso', desc: 'Abre la puerta del NOC a la sala de racks. Se gasta al usarla.' },
 };
 
 // El motor del juego dibuja el minimapa sobre este canvas (ver minimap.jsx)
